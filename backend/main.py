@@ -45,7 +45,13 @@ async def load_model():
         tf.config.threading.set_intra_op_parallelism_threads(1)
         tf.config.threading.set_inter_op_parallelism_threads(1)
         
-        model = tf.keras.models.load_model("my_model.keras", compile=False)
+        # Check if model file exists
+        model_path = "my_model.keras"
+        if not os.path.exists(model_path):
+            print(f"Model file {model_path} not found!")
+            raise FileNotFoundError(f"Model file {model_path} not found")
+        
+        model = tf.keras.models.load_model(model_path, compile=False)
         
         # Compile the model after loading to avoid issues
         model.compile()
@@ -228,4 +234,5 @@ async def predict_batch(files: List[UploadFile] = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
