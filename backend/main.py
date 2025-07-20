@@ -152,7 +152,18 @@ async def predict_image(file: UploadFile = File(...)):
             6:"Sunrise"
         }
 
+        descriptions = {
+            0:"Maintain normal driving parameters but increase sensor sensitivity and reduce following distances slightly. Monitor for rapid weather changes and ensure all lighting systems are functional for potential visibility reduction.",
+            1:" Immediately reduce speed by 30-50% and increase following distance to 5-8 seconds. Activate fog lights, rely heavily on LiDAR sensors, and consider route diversion to avoid areas with known fog accumulation.",
+            2:"Reduce speed by 20-30% and increase following distance to 4-6 seconds. Activate windshield wipers, monitor tire traction continuously, and avoid sudden acceleration or braking maneuvers to prevent hydroplaning.",
+            3:"Slow down significantly and increase following distance to avoid dust clouds from other vehicles. Close air intake vents, rely on sealed sensors, and consider stopping safely if visibility drops below safe thresholds.",
+            4:"Activate automatic headlight dimming and sun visors, monitor camera sensors for glare interference. Adjust route timing to minimize direct sun exposure during critical driving phases like lane changes or turns.",
+            5:"Reduce speed by 40-60% and increase following distance to 8-10 seconds. Engage traction control systems, monitor tire grip continuously, and prioritize cleared roadways while avoiding sudden steering inputs.",
+            6:"Adjust camera exposure settings and activate anti-glare protocols. Monitor for sun glare interference with sensors and reduce speed when driving directly toward sunrise until lighting conditions stabilize."
+        }
+
         prediction = mp[predicted_class]
+        description = descriptions[predicted_class]
 
         confidence = float(np.max(predictions[0]))
         
@@ -161,6 +172,7 @@ async def predict_image(file: UploadFile = File(...)):
         
         return JSONResponse(content={
             "prediction": prediction,
+            "descripton": description,
             "predicted_class":predicted_class,
             "confidence": confidence,
             "all_probabilities": class_probabilities,
@@ -171,66 +183,6 @@ async def predict_image(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
-@app.post("/predict/batch")
-async def predict_batch(files: List[UploadFile] = File(...)):
-    """
-    Predict classes for multiple uploaded images
-    
-    Args:
-        files: List of uploaded image files
-    
-    Returns:
-        JSON response with predictions for all images
-    """
-    if model is None:
-        raise HTTPException(status_code=500, detail="Model not loaded")
-    
-    if len(files) > 10:  # Limit batch size
-        raise HTTPException(status_code=400, detail="Maximum 10 images allowed per batch")
-    
-    results = []
-    
-    for file in files:
-        if not file.content_type.startswith('image/'):
-            results.append({
-                "filename": file.filename,
-                "error": "File must be an image"
-            })
-            continue
-        
-        try:
-            # Read and process image
-            image_data = await file.read()
-            image = Image.open(io.BytesIO(image_data))
-            
-            # Get target size from model input shape
-            if len(model.input_shape) == 4:
-                target_size = (model.input_shape[2], model.input_shape[1])
-            else:
-                target_size = (224, 224)
-            
-            processed_image = preprocess_image(image, target_size)
-            
-            # Make prediction
-            predictions = model.predict(processed_image)
-            
-            predicted_class = int(np.argmax(predictions[0]))
-            confidence = float(np.max(predictions[0]))
-            
-            results.append({
-                "filename": file.filename,
-                "predicted_class": predicted_class,
-                "confidence": confidence,
-                "all_probabilities": predictions[0].tolist()
-            })
-            
-        except Exception as e:
-            results.append({
-                "filename": file.filename,
-                "error": f"Error processing image: {str(e)}"
-            })
-    
-    return JSONResponse(content={"results": results})
 
 if __name__ == "__main__":
     import uvicorn
