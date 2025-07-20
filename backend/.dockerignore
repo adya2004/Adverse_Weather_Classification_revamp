@@ -1,0 +1,16 @@
+myenv/
+.env
+.git
+.gitignore
+README.md
+.dockerignore
+Dockerfile
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+.venv/
+venv/
