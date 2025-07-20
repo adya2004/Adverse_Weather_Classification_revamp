@@ -37,7 +37,7 @@ export default function WeatherClassifier() {
 
       // Replace this URL with your actual AI backend endpoint
       const response = await fetch(
-        "https://2f7570c146c0.ngrok-free.app/predict",
+        "https://adverse-weather-classification-revamp.onrender.com/predict",
         {
           method: "POST",
           body: formData,
